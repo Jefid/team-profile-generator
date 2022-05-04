@@ -1,155 +1,184 @@
-const { writeFile, copyFile } = require('./utils/generate-site.js');
 const inquirer = require("inquirer");
-const generatePage = require("./src/page-template");
+const fs = require("fs");
+const generateTeam = require("./src/test-template.js");
 
-const promptUser = () => {
-  return inquirer.prompt([
-    {
-      type: "input",
-      name: "name",
-      message: "What is your name? (Required)",
-      validate: (nameInput) => {
-        if (nameInput) {
-          return true;
-        } else {
-          console.log("Please enter your name!");
-          return false;
-        }
-      },
-    },
-    {
-      type: "input",
-      name: "github",
-      message: "Enter your GitHub Username (Required)",
-      validate: (githubInput) => {
-        if (githubInput) {
-          return true;
-        } else {
-          console.log("Please enter your GitHub username!");
-          return false;
-        }
-      },
-    },
-    {
-      type: "confirm",
-      name: "confirmAbout",
-      message:
-        'Would you like to enter some information about yourself for an "About" section?',
-      default: true,
-    },
-    {
-      type: "input",
-      name: "about",
-      message: "Provide some information about yourself:",
-      when: ({ confirmAbout }) => confirmAbout,
-    },
-  ]);
-};
+const Manager = require("./lib/Manager");
+const Engineer = require("./lib/Engineer");
+const Intern = require("./lib/Intern");
 
-const promptProject = (portfolioData) => {
+const teamMembers = [];
+
+// inquirer questions here
+// first question function is add manager
+function addManager() {
   console.log(`
-=================
-Add a New Project
-=================
-`);
-
-  // If there's no 'projects' array property, create one
-  if (!portfolioData.projects) {
-    portfolioData.projects = [];
-  }
+    =======================
+    Team Profile Generator!
+    =======================
+    `);
   return inquirer
     .prompt([
       {
         type: "input",
-        name: "name",
-        message: "What is the name of your project? (Required)",
-        validate: (nameInput) => {
-          if (nameInput) {
-            return true;
-          } else {
-            console.log("You need to enter a project name!");
-            return false;
-          }
-        },
+        name: "managerName",
+        message: "To begin, please enter the name of the Team Manager:",
       },
       {
         type: "input",
-        name: "description",
-        message: "Provide a description of the project (Required)",
-        validate: (descriptionInput) => {
-          if (descriptionInput) {
-            return true;
-          } else {
-            console.log("You need to enter a project description!");
-            return false;
-          }
-        },
-      },
-      {
-        type: "checkbox",
-        name: "languages",
-        message: "What did you this project with? (Check all that apply)",
-        choices: [
-          "JavaScript",
-          "HTML",
-          "CSS",
-          "ES6",
-          "jQuery",
-          "Bootstrap",
-          "Node",
-        ],
+        name: "managerID",
+        message: "Enter the employee ID for this manager:",
       },
       {
         type: "input",
-        name: "link",
-        message: "Enter the GitHub link to your project. (Required)",
-        validate: (linkInput) => {
-          if (linkInput) {
-            return true;
-          } else {
-            console.log("You need to enter a project GitHub link!");
-            return false;
-          }
-        },
+        name: "managerEmail",
+        message: "Enter the email for this manager: ",
       },
       {
-        type: "confirm",
-        name: "feature",
-        message: "Would you like to feature this project?",
-        default: false,
-      },
-      {
-        type: "confirm",
-        name: "confirmAddProject",
-        message: "Would you like to enter another project?",
-        default: false,
+        type: "input",
+        name: "managerOfficeNum",
+        message: "Enter the office number for this manager: ",
       },
     ])
-    .then((projectData) => {
-      portfolioData.projects.push(projectData);
-      if (projectData.confirmAddProject) {
-        return promptProject(portfolioData);
-      } else {
-        return portfolioData;
+    .then((answers) => {
+      const manager = new Manager(
+        answers.managerName,
+        answers.managerID,
+        answers.managerEmail,
+        answers.managerOfficeNum
+      );
+      teamMembers.push(manager);
+      console.log(teamMembers);
+      addNewMember();
+    });
+}
+
+// then addNewMember will handle engineer OR intern OR finish adding members
+// use conditionals to determine which was chosen
+// type: checkbox
+
+function addEngineer() {
+  console.log(`
+    ================
+    Add New Engineer
+    ================
+    `);
+  return inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "engineerName",
+        message: "Please enter the name of the engineer",
+      },
+      {
+        type: "input",
+        name: "engineerID",
+        message: "Please enter the employee ID number",
+      },
+      {
+        type: "input",
+        name: "engineerEmail",
+        message: "Enter their email",
+      },
+      {
+        type: "input",
+        name: "github",
+        message: "Enter their GitHub username",
+      },
+    ])
+    .then((answers) => {
+      const engineer = new Engineer(
+        answers.engineerName,
+        answers.engineerID,
+        answers.engineerEmail,
+        answers.github
+      );
+      teamMembers.push(engineer);
+      addNewMember();
+    });
+}
+
+function addIntern() {
+  console.log(`
+    ==============
+    Add New Intern
+    ==============
+    `);
+  return inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "internName",
+        message: "Enter the name of the intern",
+      },
+      {
+        type: "input",
+        name: "internID",
+        message: "Enter the employee ID",
+      },
+      {
+        type: "input",
+        name: "internEmail",
+        message: "Enter the email of this intern",
+      },
+      {
+        type: "input",
+        name: "school",
+        message: "Enter the school this intern is attending",
+      },
+    ])
+    .then((answers) => {
+      const intern = new Intern(
+        answers.internName,
+        answers.internID,
+        answers.internEmail,
+        answers.school
+      );
+      teamMembers.push(intern);
+      addNewMember();
+    });
+}
+
+// IF finish: deploy => copyFile & writeFile
+// ~ notate semantics for parameters
+// take ~(data) => generatePage(data)
+// then ~(pagehtml) => writeFile(pageHtml)
+// then (writeFileResponse) => copyFile()
+
+function addNewMember() {
+  return inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "memberType",
+        message:
+          "Please select a role to add a new team member, otherwise select finish. ",
+        choices: ["Engineer", "Intern", "Finish building team"],
+      },
+    ])
+    .then((choice) => {
+      console.log(choice.memberType);
+      if (choice.memberType === "Engineer") {
+        addEngineer();
+      }
+      if (choice.memberType === "Intern") {
+        addIntern();
+      }
+      if (choice.memberType === "Finish building team") {
+        console.log(teamMembers);
+        return finishTeam("./dist/index.html", generateTeam(teamMembers));
       }
     });
-};
+}
 
-promptUser()
-  .then(promptProject)
-  .then(portfolioData => {
-    return generatePage(portfolioData);
-  })
-  .then(pageHTML => {
-    return writeFile(pageHTML);
-  })
-  .then(writeFileResponse => {
-    console.log(writeFileResponse);
-    return copyFile();
-  })
-  .then(copyFileResponse => {
-    console.log(copyFileResponse);
-  })
-  .catch(err => {
-    console.log(err);
+function finishTeam(fileName, data) {
+  console.log(teamMembers);
+  fs.writeFile(fileName, data, (err) => {
+    if (err) {
+      throw err;
+    } else {
+      console.log("File written. It lives in the ``/dist`` folder!");
+    }
   });
+}
+
+addManager();
