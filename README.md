@@ -8,9 +8,9 @@ A Node.js command-line application that takes in information about employees on 
 ## Mock Up
 Here's a video showing functionality:
 
-<!-- <img src = "utils/mock-up.gif"> -->
+<img src = "utils/mock-up.gif"> 
 
-<!-- [Link To Video](https://drive.google.com/file/d/1ahd6QcuB7Rs9CW39wbv26LdNGl30WCad/view) -->
+[Link To Video](https://https://drive.google.com/file/d/1u9nMO49v16mcvOpnCQCKZXE-3I4igPB5/view) 
 
 
 
